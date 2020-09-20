@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roving Tabindex</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="custom.css">
+</head>
+<body>
+<nav>
+    <ul>
+        <li><a href="#demos">Demos</a></li>
+        <li><a href="#usage">Usage</a></li>
+        <li><a href="#settings">Settings</a></li>
+        <li><a href="#get-it-now">Get it now</a></li>
+    </ul>
+</nav>
+<h1>Roving Tabindex - javascript helper to create accessible widgets</h1>
+<h2 id="demos">Demos</h2>
+<h3>Radio Group</h3>
+<p>Implemented using <a href="https://www.w3.org/TR/wai-aria-practices-1.1/#radiobutton">WAI Guidelines</a>.</p>
+<figure>
+    <p><strong>Preview</strong></p>
+    <div role="radiogroup" aria-labelledby="label_1">
+        <strong id="label_1">My favourite color:</strong>
+        <div id="radio-group-widget">
+            <div role="radio" aria-checked="false" tabindex="0">Red</div>
+            <div role="radio" aria-checked="false" tabindex="-1">Green</div>
+            <div role="radio" aria-checked="false" tabindex="-1">Blue</div>
+        </div>
+    </div>
+    <p><strong>HTML</strong></p>
+    <div>
+        <pre><code>&lt;div role=&quot;radiogroup&quot; aria-labelledby=&quot;label_1&quot;&gt;
+    &lt;strong id=&quot;label_1&quot;&gt;My favourite color:&lt;/strong&gt;
+    &lt;div id=&quot;radio-group-widget&quot;&gt;
+        &lt;div role=&quot;radio&quot; aria-checked=&quot;false&quot; tabindex=&quot;0&quot;&gt;Red&lt;/div&gt;
+        &lt;div role=&quot;radio&quot; aria-checked=&quot;false&quot; tabindex=&quot;-1&quot;&gt;Green&lt;/div&gt;
+        &lt;div role=&quot;radio&quot; aria-checked=&quot;false&quot; tabindex=&quot;-1&quot;&gt;Blue&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+    <p><strong>Javascript</strong></p>
+    <div><pre><code>const radiogroup = document.getElementById('radio-group-widget');
+
+new RovingTabindex(radiogroup);
+
+radiogroup.addEventListener('movefocus', (event) =&gt; {
+    event.detail.to.click()
+});
+
+radiogroup.addEventListener('keydown', (event) =&gt; {
+    if (event.target.matches('[role=&quot;radio&quot;]') &amp;&amp; event.key === &quot; &quot;) {
+        event.preventDefault(); //do not scroll down
+        event.target.click();
+    }
+});
+
+radiogroup.addEventListener('click', (event) =&gt; {
+   if (event.target.matches('[role=&quot;radio&quot;][tabindex=&quot;-1&quot;]')) {
+       let from = radiogroup.querySelector('[tabindex=&quot;0&quot;]');
+       let to = event.target;
+
+       //uncheck previously checked item
+       from.setAttribute('tabindex', '-1');
+       from.setAttribute('aria-checked', 'false');
+
+       //check new item
+       to.setAttribute('tabindex', '0');
+       to.setAttribute('aria-checked', 'true');
+       to.focus();
+   }
+});</code></pre>
+    </div>
+    <figcaption>Radio group widget implementation in HTML and javascript.</figcaption>
+</figure>
+<h3>Toolbar</h3>
+<p>Implemented using <a href="https://www.w3.org/TR/wai-aria-practices-1.1/#toolbar">WAI Guidelines</a>.</p>
+<figure>
+    <p><strong>Preview</strong></p>
+    <div id="toolbar-widget" role="toolbar" aria-label="Demo toolbar" aria-controls="square">
+        <div class="wrapper">
+            <button tabindex="0">Button 1</button>
+            <button tabindex="-1">Button 2</button>
+            <button tabindex="-1">Button 3</button>
+        </div>
+        <button tabindex="-1">Button 4</button>
+        <button tabindex="-1">Button 5</button>
+    </div>
+    <div id="square"></div>
+    <p><strong>HTML</strong></p>
+    <div>
+        <pre><code>&lt;div id=&quot;toolbar-widget&quot; role=&quot;toolbar&quot; aria-label=&quot;Demo toolbar&quot; aria-controls=&quot;square&quot;&gt;
+    &lt;div class=&quot;wrapper&quot;&gt;
+        &lt;button tabindex=&quot;0&quot;&gt;Button 1&lt;/button&gt;
+        &lt;button tabindex=&quot;-1&quot;&gt;Button 2&lt;/button&gt;
+        &lt;button tabindex=&quot;-1&quot;&gt;Button 3&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;button tabindex=&quot;-1&quot;&gt;Button 4&lt;/button&gt;
+    &lt;button tabindex=&quot;-1&quot;&gt;Button 5&lt;/button&gt;
+&lt;/div&gt;
+&lt;div id=&quot;square&quot;&gt;&lt;/div&gt;</code></pre>
+    </div>
+    <p><strong>Javascript</strong></p>
+    <div><pre><code>const toolbar = document.getElementById('toolbar-widget');
+
+new RovingTabindex(toolbar, {
+    next: ['ArrowRight'],
+    previous: ['ArrowLeft'],
+    childrenSelector: 'button'
+});
+
+const manageFocus = (from,to) =&gt; {
+    from.setAttribute('tabindex', '-1');
+    to.setAttribute('tabindex', '0');
+    to.focus();
+};
+
+toolbar.addEventListener('movefocus', (event) =&gt; {
+    manageFocus(event.detail.from, event.detail.to)
+});
+
+toolbar.addEventListener('click', (event) =&gt; {
+    if (event.target.matches('[tabindex=&quot;-1&quot;]')) {
+        let from = toolbar.querySelector('[tabindex=&quot;0&quot;]');
+        let to = event.target;
+
+        manageFocus(from, to);
+    }
+});</code></pre>
+    </div>
+    <figcaption>Toolbar widget implementation in HTML and javascript.</figcaption>
+</figure>
+<h2 id="usage">Getting started</h2>
+<ol>
+<li>
+    <h3>Setup your HTML: a parent and children with appropriate tabindex.</h3>
+    <figure>
+        <pre><code>&lt;div id=&quot;demo&quot;&gt;
+    &lt;button tabindex=&quot;0&quot;&gt;Button 1&lt;/button&gt;
+    &lt;button tabindex=&quot;-1&quot;&gt;Button 2&lt;/button&gt;
+    &lt;button tabindex=&quot;-1&quot;&gt;Button 3&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+    </figure>
+</li>
+<li>
+    <h3>Add rovingtabindex.js before your closing body tag.</h3>
+    <figure>
+        <pre><code>&lt;script src=&quot;rovingtabindex.js&quot;&gt;&lt;/script&gt;</code></pre>
+    </figure>
+</li>
+<li>
+    <h3>Initialize RovingTabindex.</h3>
+    <figure>
+        <pre><code>new RovingTabindex('#demo');</code></pre>
+    </figure>
+</li>
+</ol>
+<h2 id="settings">Settings</h2>
+<ul class="list-with-margin">
+    <li>
+        <p><strong>first</strong></p>
+        <p><b>Type:</b> array</p>
+        <p><b>Default:</b> <code>["Home"]</code></p>
+        <p>Array with all values of <code>event.key</code>, that set focus to the first element.</p>
+    </li>
+    <li>
+        <p><strong>last</strong></p>
+        <p><b>Type:</b> array</p>
+        <p><b>Default:</b> <code>["End"]</code></p>
+        <p>Array with all values of <code>event.key</code>, that set focus to the last element.</p>
+    </li>
+    <li>
+        <p><strong>next</strong></p>
+        <p><b>Type:</b> array</p>
+        <p><b>Default:</b> <code> ["ArrowRight", "ArrowDown"]</code></p>
+        <p>Array with all values of <code>event.key</code>, that set focus to the next element. If <code>wrap</code> is set to <code>true</code>, then last element's next element is the first element.</code></p>
+    </li>
+    <li>
+        <p><strong>previous</strong></p>
+        <p><b>Type:</b> array</p>
+        <p><b>Default:</b> <code>["ArrowLeft", "ArrowUp"]</code></p>
+        <p>Array with all values of <code>event.key</code>, that set focus to the previous element. If <code>wrap</code> is set to <code>true</code>, then first element's previous element is the last element.</code></p>
+    </li>
+    <li>
+        <p><strong>character</strong></p>
+        <p><b>Type:</b> boolean</p>
+        <p><b>Default:</b> <code>true</code></p>
+        <p>Indicates if typing a character should move focus to the first item beginning with that character. If no item matches typed character, focus does not move.</p>
+    </li>
+    <li>
+        <p><strong>wrap</strong></p>
+        <p><b>Type:</b> boolean</p>
+        <p><b>Default:</b> <code>true</code></p>
+        <p>If set to true indicates, first item's previous item is last item and last item's next item is first item.</p>
+    </li>
+    <li>
+        <p><strong>childrenSelector</strong></p>
+        <p><b>Type:</b> string</p>
+        <p><b>Default:</b> <code>':scope > *'</code></p>
+        <p>Informs the widget which elements it should iterate over. Allows to ignore wrapping elements, icons and so on.</p>
+    </li>
+    <li>
+        <p><strong>findActive</strong></p>
+        <p><b>Type:</b> function</p>
+        <p><b>Default:</b> <code>(item) => item.getAttribute('tabindex') === '0'</code></p>
+        <p>Function used to identify active child on first interaction.</p>
+    </li>
+</ul>
+<h2>Methods</h2>
+<ul class="list-with-margin">
+    <li>
+        <p><strong>destroy</strong></p>
+        <p>Removes all event listeners.</p>
+    </li>
+</ul>
+<h2>Events</h2>
+<ul class="list-with-margin">
+    <li>
+        <p><strong>rovingtabindexinitialized</strong></p>
+        <p>Fired when widget gets initialized.</p>
+    </li>
+    <li>
+        <p><strong>rovingtabindexdestroyed</strong></p>
+        <p>Fired after completing destroy action.</p>
+    </li>
+    <li>
+        <p><strong>movefocus</strong></p>
+        <p>Fired after pressing key should move focus. <code>event.details</code> contains two fields (<code>from</code and <code>to</code>) indicating previously focused item and item, that should get focused.</p>
+    </li>
+</ul>
+<h3>Get it now</h3>
+<p>
+    You will fing all the code on <a href="https://github.com/kasia-website/rovingtabindex">Github</a>.
+</p>
+<script src="index.js"></script>
+<script src="main.js"></script>
+<script src="http://components.test/assets/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

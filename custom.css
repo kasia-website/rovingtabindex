@@ -2,7 +2,7 @@
     --custom-1: #6E5D45;
     --custom-2: #F79E52;
     --custom-3: #E08155;
-    --custom-4: #F76E52;
+    --custom-4: #BA423D;
     --custom-5: #ED524E;
 }
 
@@ -135,7 +135,7 @@ code.hljs {
 
 .hljs-keyword,
 .hljs-selector-tag {
-    color: #c26230;
+    color: #db682c;
 }
 
 .hljs-string,
